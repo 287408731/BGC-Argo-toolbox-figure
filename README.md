@@ -8,69 +8,413 @@ This toolbox is created and maintained by M. Cornec (LOV, now at NOAA-PMEL), Y. 
 This toolbox is adapted from the BGC-Argo-Mat Toolbox: H. Frenzel*, J. Sharp*, A. Fassbender, J. Plant, T. Maurer, Y. Takeshita, D. Nicholson, A. Gray, 2021.
 BGC-Argo-Mat: A MATLAB toolbox for accessing and visualizing Biogeochemical Argo data. Zenodo. https://doi.org/10.5281/zenodo.4971318.
 
-## REQUIREMENTS
-1. Rstudio version 1.4 and R version 3.4 (or more recent) are needed to use these functions without modifications.  
-2. OSmac users need to install the "xquartz" for figure plot (https://www.xquartz.org/).
-3. An Internet connection is needed to get the latest versions of index and Sprof files; but the repository includes versions of these files so that it can be run offline. 
-4. Memory requirements depend on the number of profiles and variables that are simultaneously loaded into memory. 
+---
+title: "Demo for BGC_Argo_R_toolbox"
+author: "Yibin Huang & Marin Cornec"
+date: "`r Sys.Date()`"
+output: html_document
+---
+-------------------------------
+
+[Video tutorial](https://www.youtube.com/watch?v=w_6pEGNXQQ4)
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/tutorial.jpg")
+```
+
+**Link: https://www.youtube.com/watch?v=w_6pEGNXQQ4**
+
+------------------------------------
+
+# Installation
+
+**Fill the path to the code directory, you can instead set the code
+directory as the working directory with setwd()**
+```{r}
+path_code = ""
+```
+
+**Load the functions and libraries**
+```{r, eval=FALSE}
+setwd(path_code)
+func.sources = list.files(path_code,pattern="*.R")
+func.sources = func.sources[which(func.sources %in% c('Main_workshop.R',
+                                                      "bgc_argo_workshop_R_license.R")==F)]
+
+if(length(grep("Rproj",func.sources))!=0){
+  func.sources = func.sources[-grep("Rproj",func.sources)]
+}
+invisible(sapply(paste0(func.sources),source,.GlobalEnv))
+
+aux.func.sources = list.files(paste0(path_code,"/auxil"),pattern="*.R")
+invisible(sapply(paste0(path_code,"/auxil/",aux.func.sources),source,.GlobalEnv))
+```
+
+------------------------------------
+
+# Exercise 0: Initialize 
+
+This function defines standard settings and paths and creates Index
+and Profiles folders in your current path. It also downloads the Sprof 
+index file from the GDAC to your Index folder. The Sprof index is 
+referenced when downloading and subsetting float data based on user 
+specified criteria in other functions.
+
+```{r, eval=FALSE}
+initialize_argo() # Take some minutes to download the global Index
+```
+[1] "success!"
+
+```{r, eval=FALSE}
+float_idx <-which(Float$wmoid=='5906439') # Float IDs for float 5906439 (WMOID) in the S_file index
+```
+
+[1] 580 
+
+```{r, eval=FALSE}
+prof_ids = c(Float$prof_idx1[float_idx]:Float$prof_idx2[float_idx]) 
+# Profile IDs for float 5906439 (WMOID) in the S_file index
+```
 
 
-## INSTALLATION AND USE
-This repository can be cloned using the command line or GitHub Desktop. Or the files can be directly downloaded in zipped format.
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_id.png")
+```
 
-Before use, make sure the files are placed in a directory that is in the R search path. Or add the directory where they are located to the search path https://support.rstudio.com/hc/en-us/articles/200711843-Working-Directories-and-Workspaces. Or run it in the directory where the main_workshop script was placed.
+```{r, eval=FALSE}
+dates = Sprof$date[prof_ids] # Dates of each profile from float #5906439
+```
 
-For an overview of how to use this toolbox, step through the 'main_workshop' script (launching it in the R Console, or in the Rstudio console using the Run button or Ctrl+Alt+Enter, the Run All shortcut in R studio), a tutorial that was developed for the 2021 GO-BGC Scientific Workshop (6/30/21).
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/date.png")
+```
 
-## FUNCTIONS
+```{r, eval=FALSE}
+sensors = unique(Sprof$sens[prof_ids]) # Sensors available for float #5906439
+```
+[1] "PRES TEMP PSAL DOXY CHLA BBP700 PH_IN_SITU_TOTAL NITRATE"
 
-### Main functions (to be called from script or command window):
-initialize_argo.R        : defines standard settings and paths and downloads synthetic profile index file<br/>
-load_float_data.R        : loads data of one or more specified float(s) into memory<br/>
-select_profiles.R        : returns profiles and corresponding floats based on input criteria<br/>
-show_profiles.R          : downloads float data and calls plot_profiles to create plot<br/>
-show_sections.R          : downloads float data and calls plot_sections to create plot<br/>
-show_trajectories.R      : downloads float data and calls plot_trajectories to create plot<br/>
-get_lon_lat_time.R       : extracts the longitude, latitude, and time information for the specified floats)<br/>
-main_workshop.R          : tutorial script for GO-BGC Scientific Workshop (6/30/21)<br/>
-### Background functions (primarily called by main functions in background):
+------------------------------------
 
-calc_auxil.R             : calculates various auxiliary variables from Argo float data<br/>
-check_dir.R              : determines if a directory needs to be created and does so if necessary<br/>
-combine_variables.R      : combines the given variables along with all associated variables and returns them<br/>
-depth_interp.R           : interpolates values for BGC-Argo parameters against depth<br/>
-do_download.R            : determines if a file should be downloaded or not<br/>
-do_pause.R               : pauses execution of main_workshop (if used without desktop)<br/>
-download_float.R         : downloads the Sprof NetCDF file for one float<br/>
-download_multi_floats.R  : calls download_float to download Sprof NetCDF files for multiple floats<br/>
-get_dims                 : determines the number of profiles, parameters,and depth levels in an Sprof netcdf file<br/> 
-get_lon_lat_lims.R       : obtains maximum/minimum latitude and longitude values from input data<br/>
-get_multi_profile_mean   : calculates the mean profile of multiple profiles<br/>
-get_var_name_units.R     : returns the long variable name and units name for a given short parameter name input<br/>
-load_library.R           : load/install the required functions<br/>
-plot_profiles.R          : plots profiles of one or more specified float(s) for the specified variable(s)<br/>
-plot_sections.R          : plots sections of one or more specified float(s) for the specified variable(s)<br/>
-plot_trajectories.R      : plots trajectories of one or more specified float(s)<br/>
-try_download.R           : attempts to download a file from any of the specified GDACs<br/>
+# Exercise 1: SOCCOM float 
+In this exercise, we download the NetCDF file for a Southern Ocean BGC float, inspect its contents, show the trajectory, plot profiles for unadjusted and adjusted data, and show the effect of adjustments  made to the nitrate concentrations.
+
+**Download NetCDF file for float #5904183, a SOCCOM float with multiple seasons**
+```{r, eval=FALSE}
+WMO = 5904859 
+success = download_float(WMO)
+```
+[1] "success!"
+
+**Show the trajectory of the downloaded float**
+```{r, eval=FALSE}
+show_trajectories(float_ids=WMO, 
+                  return_ggplot="True" # Return the plot to ggplot panel
+                  )
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/track_excercise_1.png")
+```
+
+```{r, eval=FALSE}
+show_profiles( float_ids=WMO, 
+               variables=c('PSAL','NITRATE'),
+               obs='on', # 'on' Shows points on the profile at which each measurement was made
+               raw="yes" # Show the unadjusted data ,
+              
+)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_1_excercise_1.jpg")
+```
+
+**This plots the adjusted data**
+```{r, eval=FALSE}
+show_profiles(float_ids=WMO, 
+              variables=c('PSAL','NITRATE'),
+              obs='on', # 'on' Shows points on the profile at which each measurement was made
+              raw="no"
+)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_2_excercise_1.jpg")
+```
+
+**Show sections for nitrate.** 
+
+This shows the raw, unadjusted data (pcolor plot) mixed layer depth is shown based on the temperature threshold (set the value to 2 after 'mld' to use the density threshold instead)
 
 
-You can open the corresponding R script file to check out the description of input and output parameters for individual functions. 
+```{r, eval=FALSE}
+show_sections(float_ids=WMO, 
+              variables= c('NITRATE'),
+              plot_mld=1,       # Tells the function to plot mixed layer depth
+              raw="yes") # Tells the function to plot raw data
+```
 
-## UPDATE RECORD
-Version 1 & 2: June 2021<br/>
-Version 2.1: January 2022
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/section_1_excercise_1.png")
+```
 
-## COMMENTS, BUGS etc.?
-Please feel free to use the GitHub Issues and Pull Requests features to report any problems with this code and to suggest bug fixes.
+```{r, eval=FALSE}
+show_sections( float_ids=WMO ,
+               variables= c('NITRATE'),
+               plot_mld=1, # Tells the function to plot mixed layer depth
+               raw="no",
+               qc=c(1:2) # Tells the function to plot good and probably-good data
+)
 
-## TOOLBOX VIDEO TUTORIAL
-https://www.youtube.com/watch?v=w_6pEGNXQQ4&feature=youtu.be
+```
 
-## BGC-ARGO GUIDE
-More detailed information about quality control flags, raw and adjusted modes, etc., can be found in
-H. C. Bittig et al., Front. Mar. Sci., 2019, https://doi.org/10.3389/fmars.2019.00502
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/section_2_excercise_1.png")
+```
 
-## CITATION
+------------------------------------
 
-M. Cornec (LOV), Y. Huang (NOAA-PMEL), Q. Jutard (OSU ECCE TERRA), R. Sauzede (IMEV) and C. Schmechtig (OSU ECCE TERRA), 2021.
-BGC-Argo-R: A R toolbox for accessing and visualizing Biogeochemical Argo data. Zenodo. https://doi.org/10.5281/zenodo.5028138
+# Exercise 2: Ocean Station Papa floats
+In this exercise, we define a region in the Northeast Pacific along with a duration of time, and identify the float profiles matching that criteria. We show the trajectories of all the matching floats and plot
+profiles that match the criteria for one of the floats.
+
+**Set limits near Ocean Station Papa from 2008 to 2018**
+
+```{r, eval=FALSE}
+lat_lim=c(45, 60)
+lon_lim=c(-150, -135)
+start_date="2008-01-01"
+end_date="2018-12-31"
+```
+
+**Select profiles based on those limits with specified sensor (NITRATE)**
+
+```{r, eval=FALSE}
+OSP_data= select_profiles ( lon_lim,
+                            lat_lim,
+                            start_date,
+                            end_date,
+                            sensor=c('NITRATE'), # This selects only floats with nitrate sensors
+                            outside="both") # This allows the user to specify whether to retain profiles  
+                                            # lie outside the space limits ('space')
+```
+
+**Display the number of matching floats and profiles**
+
+```{r, eval=FALSE}
+print(paste('# of matching profiles:',sum(lengths(OSP_data$float_profs))))
+```
+
+[1] "# of matching profiles: 1850"
+
+```{r, eval=FALSE}
+print(paste('# of matching floats:',length(OSP_data$float_ids)))
+```
+
+[1] "# of matching floats: 7"
+
+**Load the data for the matching float with format of data frame**
+
+```{r, eval=FALSE}
+data_OSP_df= load_float_data( float_ids= OSP_data$float_ids, # Specify WMO number
+                           float_profs=OSP_data$float_profs, # Specify selected profiles
+                            variables="ALL", # Load all the variables
+                            format="dataframe" # Specify data output format;  
+)
+```
+
+**Show trajectories for the matching floats**
+
+This function downloads the specified floats from the GDAC (unless the
+files have already been downloaded) and then loads the data for plotting.
+Adding the optional input pair 'color','multiple' will plot different
+floats in different colors
+
+```{r, eval=FALSE}
+show_trajectories(float_ids = OSP_data$float_ids,
+                               return_ggplot = TRUE  # This plots different floats in different colors
+)+ geom_rect( aes(xmin = lon_lim[1],
+                 xmax = lon_lim[2],
+                 ymin = lat_lim[1],
+                 ymax = lat_lim[2]),
+                  color="black",fill=NA # Add a frame around the selected area
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/track_excercise_2.png")
+```
+
+**Show profile plots for the first of these matching floats**
+
+**Case #1: all Salinity and Oxygen profiles from one float (1)**
+
+```{r, eval=FALSE}
+show_profiles(float_ids=OSP_data$float_ids[1], 
+              variables=c('PSAL','DOXY'),
+              obs='on',# 'on' Shows points on the profile at which each measurement was made
+)
+
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_1_excercise_2.jpg")
+```
+
+**Case #2: mean and standard deviation of all profiles from one float (1)**
+
+```{r, eval=FALSE}
+show_profiles(float_ids=OSP_data$float_ids[1], 
+              variables=c('PSAL','DOXY'),
+              obs='on', # 'on' Shows points on the profile at which each measurement was made
+              method="mean" # This tells the function to just plot the mean profile
+)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_2_excercise_2.png")
+```
+
+------------------------------------
+# Exercise 3: Hawaii floats
+
+In this exercise, we define a region near Hawaii along with a duration of time. Again, we identify the float profiles matching those criteria, show their trajectories, plot all the matching profiles on one figure, and show sections for the unadjusted and adjusted values of salinity and dissolved oxygen.
+
+**Set limits near Hawaii from 2017 to 2019**
+
+```{r, eval=FALSE}
+lat_lim=c(22, 26)
+lon_lim=c(-160, -155)
+start_date="2017-01-01"
+end_date="2019-12-31"
+```
+
+**Select profiles based on those limits**
+
+```{r, eval=FALSE}
+HW_data= select_profiles ( lon_lim, 
+                           lat_lim, 
+                           start_date,
+                           end_date,
+                           outside="none" # Exclude profiles outside the time and space limits
+)
+```
+
+**Display the number of matching floats and profiles**
+```{r, eval=FALSE}
+print(paste('# of matching profiles:',sum(lengths(HW_data$float_profs))))
+```
+[1] "# of matching profiles: 252"
+
+```{r, eval=FALSE}
+print(paste('# of matching floats:',length(HW_data$float_ids)))
+```
+[1] "# of matching floats: 5"
+
+**Show trajectories for the matching floats, along with the geo limits.**
+
+This function downloads the specified floats from the GDAC (unless the
+files have already been downloaded) and then loads the data for plotting.
+
+```{r, eval=FALSE}
+show_trajectories(float_ids=HW_data$float_ids, 
+                  return_ggplot=TRUE)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/track_excercise_3.png")
+```
+
+**Show matching profiles from all floats**
+
+Show profiles (from all floats) within specified domain and times
+
+```{r, eval=FALSE}
+show_profiles( float_ids=HW_data$float_ids, 
+               variables=c('PSAL','DOXY'),
+               float_profs=HW_data$float_profs,
+               per_float=F,  # Show all profiles in one plot
+               qc_flags =c(1,2) # Tells the function to plot good and probably-good data
+)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_1_excercise_3.jpg")
+```
+
+**Show only matching profiles from September.** 
+
+Determine profiles that occur in September for each float separately
+
+```{r, eval=FALSE}
+date<-get_lon_lat_time(float_ids=HW_data$float_ids,
+                       float_profs=HW_data$float_profs)$time
+obably-good data
+)
+
+HW_float_profs_Sep<-list()
+for (f in 1:length(HW_data$float_ids)){
+  HW_float_profs_Sep[[f]] <-
+    HW_data$float_profs[[f]][which(month(as.POSIXct(date[[f]]))==9)]
+  
+}
+```
+
+
+```{r, eval=FALSE}
+show_profiles( float_ids=HW_data$float_ids, 
+               variables=c('PSAL','DOXY'),
+               float_profs = HW_float_profs_Sep, 
+               per_float=F,  # Show all profiles in one plot:
+               obs='on', # Plot a marker at each observation
+               qc_flags=c(1,2),  # Apply QC flags
+               title_add= 'September' 
+)
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/profile_2_excercise_3.jpg")
+```
+
+**Show sections for pH and oxygen for the fifth float in the list of Hawaii floats**. 
+
+This shows the raw, unadjusted data mixed layer depth is shown based on the temperature threshold (set the value to 2 after 'mld' to use the density threshold instead)
+
+
+```{r, eval=FALSE}
+show_sections( float_ids=HW_data$float_ids[5],
+               variables=c('PH_IN_SITU_TOTAL','DOXY'),
+               plot_mld=1, # Plot the mixed layer depth
+               raw="yes" # Plot raw (unadjusted) data
+) 
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/section_1_excercise_3.png")
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/section_2_excercise_3.png")
+```
+
+
+**Show time series of near-surface pH and oxygen for two floats.**
+
+The pH sensor for float 5906039 failed in late 2019, which is evident from the premature end to the line halfway through the first figure.
+
+```{r, eval=FALSE}
+show_time_series ( float_ids=HW_data$float_ids[4:5],
+               variables=c('PH_IN_SITU_TOTAL','DOXY'),
+               plot_depth=20, # Plot the time-series for the given depth (20m)
+               raw="no"   # Plot adjusted data
+) 
+```
+
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/timeseries_1_excercise_3.png")
+```
+```{r echo=FALSE, fig.cap="", out.width = '60%'}
+knitr::include_graphics("https://raw.githubusercontent.com/287408731/BGC-Argo-toolbox-figure/main/figures%20for%20demo/timeseries_2_excercise_3.png")
+```
+
+</p>
